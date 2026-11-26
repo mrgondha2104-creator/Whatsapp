@@ -1,0 +1,1195 @@
+<!-- Hidden File Input for All File Transfers (Images, Videos, Audio, ZIP, BIN, DOCS, APK, etc.) -->
+<input type="file" #fileInput (change)="onFileSelected($event)" style="display: none;" />
+
+<!-- ======================================================== -->
+<!-- TOP UPSIDE EMPLOYEE & PERMISSION CONTROL BAR              -->
+<!-- ======================================================== -->
+<div class="top-upside-bar">
+  <div class="top-bar-right">
+    <!-- Upside Buttons for Employee Directory, Add Employee, Theme Toggle -->
+    <button class="top-btn-emp-dir" (click)="openEmployeeModal('directory')" title="View in-house employees & set permissions">
+      👥 Employee Directory & Permissions ({{ employees.length }})
+    </button>
+    <button class="top-btn-emp-add" (click)="openEmployeeModal('add')" title="Register a new employee">
+      ➕ Add Employee
+    </button>
+    <button class="top-btn-theme" (click)="toggleTheme()" title="Toggle Dark/Light Mode">
+      {{ isLightMode ? '🌙 Dark' : '☀️ Light' }}
+    </button>
+  </div>
+</div>
+
+<div class="app-container" [class.light-mode]="isLightMode">
+
+  <!-- ======================================================== -->
+  <!-- 1. LOGIN SCREEN (In-House Employee Login)                -->
+  <!-- ======================================================== -->
+  <div *ngIf="!isLoggedIn" class="login-page">
+    <div class="login-header-band">
+      <div class="login-brand">
+        <svg viewBox="0 0 39 39" width="39" height="39" fill="none">
+          <path fill="#25D366" d="M19.5 0C8.75 0 0 8.75 0 19.5c0 3.44.89 6.67 2.45 9.48L.26 38.07a1.07 1.07 0 001.32 1.32l9.09-2.19A19.34 19.34 0 0019.5 39C30.25 39 39 30.25 39 19.5S30.25 0 19.5 0z"/>
+          <path fill="#fff" d="M30.13 23.83c-.45-.23-2.67-1.32-3.08-1.47-.42-.15-.72-.23-1.02.23-.3.45-1.17 1.47-1.43 1.77-.27.3-.53.34-.98.11s-1.92-.71-3.66-2.26c-1.35-1.2-2.27-2.69-2.53-3.15-.27-.45-.03-.7.2-.92.2-.2.45-.53.68-.79.23-.27.3-.45.45-.76.15-.3.08-.57-.04-.79-.11-.23-1.02-2.46-1.4-3.37-.37-.88-.75-.76-1.03-.77l-.88-.02c-.3 0-.79.11-1.2.57-.42.45-1.6 1.57-1.6 3.82s1.64 4.43 1.86 4.73c.23.3 3.23 4.93 7.82 6.92 1.09.47 1.94.75 2.61.96 1.1.35 2.1.3 2.89.18.88-.13 2.67-1.09 3.05-2.15.38-1.05.38-1.96.26-2.15-.11-.19-.41-.3-.86-.53z"/>
+        </svg>
+        <span>IN-HOUSE WORKPLACE WHATSAPP</span>
+      </div>
+    </div>
+
+    <div class="login-card-container">
+      <div class="login-card">
+        <div class="login-left">
+          <h2>In-House Employee Sign In</h2>
+          <p class="login-subtext">This WhatsApp is restricted to verified company employees only. Access and permissions are configured by company administrators.</p>
+
+          <div *ngIf="loginError" class="login-error-alert animate-pop-in">
+            ⚠️ {{ loginError }}
+          </div>
+
+          <div class="login-form">
+            <div class="form-group">
+              <label>User ID / Employee Code</label>
+              <input type="text" [(ngModel)]="loginInput" (keydown.enter)="login()" placeholder="e.g. EMP-001, EMP-002" class="login-input" />
+            </div>
+
+            <div class="form-group">
+              <div class="form-label-row">
+                <label>Password</label>
+                <span class="default-pass-hint">Default: <strong>Password@123</strong></span>
+              </div>
+              <div class="password-input-wrapper">
+                <input [type]="showLoginPassword ? 'text' : 'password'" [(ngModel)]="loginPassword" (keydown.enter)="login()" placeholder="Enter password" class="login-input" />
+                <button type="button" class="btn-toggle-eye" (click)="showLoginPassword = !showLoginPassword" title="Show / Hide Password">
+                  {{ showLoginPassword ? '👁️' : '🙈' }}
+                </button>
+              </div>
+            </div>
+            
+            <button (click)="login()" class="btn-primary-whatsapp">
+              Sign In to In-House WhatsApp
+            </button>
+          </div>
+
+          <!-- Quick Employee Selector -->
+          <div class="quick-accounts">
+            <div class="quick-header-row">
+              <span class="quick-title">Select In-House Employee (Shows Status & Credentials):</span>
+              <button class="add-emp-quick-link" (click)="openEmployeeModal('add')">+ Add New Employee</button>
+            </div>
+            <div class="employee-grid-cards">
+              <div *ngFor="let emp of employees" 
+                   (click)="loginWithEmpCode(emp.empCode || '', 'Password@123')" 
+                   class="emp-card-tile"
+                   [class.is-deactivated-tile]="!emp.isActive"
+                   [class.active-selected]="loginInput === emp.empCode">
+                <img [src]="emp.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + emp.id" class="emp-tile-avatar" />
+                <div class="emp-tile-meta">
+                  <div class="emp-meta-top">
+                    <span class="emp-code-badge">{{ emp.empCode }}</span>
+                    <span class="status-pill-small" [class.status-active]="emp.isActive" [class.status-inactive]="!emp.isActive">
+                      {{ emp.isActive ? 'Active 🟢' : 'Deactivated 🔴' }}
+                    </span>
+                  </div>
+                  <strong class="emp-name">{{ emp.name }}</strong>
+                  <span class="emp-dept">{{ emp.department }} • {{ emp.role }}</span>
+                  <div class="emp-creds-hint">
+                    <code>ID: {{ emp.empCode }} | Pass: Password@123</code>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="login-right">
+          <div class="qr-box">
+            <div class="qr-simulated">
+              <div class="qr-corner top-left"></div>
+              <div class="qr-corner top-right"></div>
+              <div class="qr-corner bottom-left"></div>
+              <div class="qr-matrix"></div>
+              <div class="qr-scan-line"></div>
+              <div class="qr-center-logo">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="#25D366">
+                  <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.38 5.07L2.05 21.95l4.98-1.3A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/>
+                </svg>
+              </div>
+            </div>
+            <p class="qr-hint">Internal Workplace Secure Network • SQL Server: Whatsapp</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 2. MAIN APPLICATION (When logged in as an Employee)      -->
+  <!-- ======================================================== -->
+  <div *ngIf="isLoggedIn" class="main-layout">
+
+    <!-- ---------------------------------------------------- -->
+    <!-- LEFT SIDEBAR                                         -->
+    <!-- ---------------------------------------------------- -->
+    <div class="sidebar">
+      <!-- Sidebar Header -->
+      <div class="sidebar-header">
+        <div class="user-avatar-container" (click)="openProfileDrawer()" title="View Employee Profile">
+          <img [src]="currentUser?.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=user'" class="avatar-img" />
+          <div class="current-emp-header-badge">
+            <span class="user-name-small">{{ currentUser?.name }}</span>
+            <span class="emp-code-small">{{ currentUser?.empCode }} • {{ currentUser?.department }}</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- Status Button -->
+          <button class="icon-btn status-btn" (click)="statusGroups.length > 0 ? openStatusViewer(statusGroups[0]) : (currentUser?.canPostStatus ? showCreateStatusModal = true : null)" title="Status Stories">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+              <circle cx="12" cy="12" r="4" fill="currentColor"/>
+            </svg>
+            <span *ngIf="statusGroups.length > 0" class="status-indicator-badge"></span>
+          </button>
+
+          <!-- Workplace Employees Directory Icon -->
+          <button class="icon-btn" (click)="openEmployeeModal('directory')" title="Workplace Employees Directory">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+            </svg>
+          </button>
+
+          <!-- Menu Dropdown Trigger -->
+          <div class="dropdown-wrapper">
+            <button class="icon-btn" (click)="$event.stopPropagation(); showMenuDropdown = !showMenuDropdown" title="Menu">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+              </svg>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div *ngIf="showMenuDropdown" class="dropdown-menu animate-pop-in" (click)="$event.stopPropagation()">
+              <div class="dropdown-item" (click)="openEmployeeModal('directory'); showMenuDropdown = false">
+                <span>👥 Employee Directory</span>
+              </div>
+              <div class="dropdown-item" (click)="openEmployeeModal('add'); showMenuDropdown = false">
+                <span>➕ Add Employee</span>
+              </div>
+              <div class="dropdown-item" *ngIf="currentUser?.canCreateGroups" (click)="showCreateGroupModal = true; showMenuDropdown = false">
+                <span>New Group</span>
+              </div>
+              <div class="dropdown-item" *ngIf="currentUser?.canPostStatus" (click)="showCreateStatusModal = true; showMenuDropdown = false">
+                <span>Add Status</span>
+              </div>
+              <div class="dropdown-item" (click)="showStarredDrawer = true; showMenuDropdown = false">
+                <span>Starred Messages</span>
+              </div>
+              <div class="dropdown-item" (click)="openProfileDrawer(); showMenuDropdown = false">
+                <span>Profile & Permissions</span>
+              </div>
+              <div class="dropdown-item" (click)="toggleTheme(); showMenuDropdown = false">
+                <span>{{ isLightMode ? 'Dark Theme' : 'Light Theme' }}</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item text-danger" (click)="logout(); showMenuDropdown = false">
+                <span>Sign Out</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="sidebar-search-bar">
+        <div class="search-input-box">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" class="search-icon">
+            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+          <input type="text" [(ngModel)]="chatSearchQuery" (input)="onSearchChange()" placeholder="Search employee chats or groups" />
+        </div>
+      </div>
+
+      <!-- Filter Chips (All, Unread, Groups) -->
+      <div class="filter-chips">
+        <button [class.active]="activeFilter === 'all'" (click)="setFilter('all')">All</button>
+        <button [class.active]="activeFilter === 'unread'" (click)="setFilter('unread')">
+          Unread <span *ngIf="totalUnreadChatsCount > 0" class="filter-count">({{ totalUnreadChatsCount }})</span>
+        </button>
+        <button [class.active]="activeFilter === 'groups'" (click)="setFilter('groups')">Groups</button>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- STANDARD CHAT LIST                                       -->
+      <!-- ======================================================== -->
+      <div class="chat-list">
+        <div *ngFor="let chat of filteredChats" 
+             (click)="selectChat(chat)"
+             [class.active]="activeChat?.id === chat.id"
+             class="chat-item">
+          
+          <div class="avatar-wrapper">
+            <img [src]="chat.avatar || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + chat.id" class="avatar-img" />
+            <span *ngIf="!chat.isGroup && chat.otherUser?.isOnline" class="online-dot" title="Online"></span>
+          </div>
+
+          <div class="chat-info">
+            <div class="chat-top-row">
+              <span class="chat-name">
+                {{ chat.name }}
+              </span>
+              <span class="chat-time" [class.highlight]="chat.unreadCount > 0">
+                {{ formatChatListTime(chat.lastMessage?.createdAt || chat.updatedAt) }}
+              </span>
+            </div>
+
+            <div class="chat-bottom-row">
+              <div class="last-message-snippet">
+                <!-- Status Ticks for Sent Messages -->
+                <span *ngIf="chat.lastMessage && chat.lastMessage.senderId === currentUser?.id" class="ticks">
+                  <svg *ngIf="chat.lastMessage.status === 'READ'" viewBox="0 0 16 15" width="16" height="15" fill="#53bdeb">
+                    <path d="M15.01 3.316l-.478-.372a.365.365 0 00-.51.063L8.666 9.879a.32.32 0 01-.484.033l-.358-.325a.319.319 0 00-.484.032l-.378.483a.418.418 0 00.036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 00-.064-.512zm-4.1 0l-.478-.372a.365.365 0 00-.51.063L4.566 9.879a.32.32 0 01-.484.033L1.891 7.769a.366.366 0 00-.515.006l-.423.433a.364.364 0 00.006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 00-.063-.51z"/>
+                  </svg>
+                  <svg *ngIf="chat.lastMessage.status !== 'READ'" viewBox="0 0 16 15" width="16" height="15" fill="#8696a0">
+                    <path d="M15.01 3.316l-.478-.372a.365.365 0 00-.51.063L8.666 9.879a.32.32 0 01-.484.033l-.358-.325a.319.319 0 00-.484.032l-.378.483a.418.418 0 00.036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 00-.064-.512zm-4.1 0l-.478-.372a.365.365 0 00-.51.063L4.566 9.879a.32.32 0 01-.484.033L1.891 7.769a.366.366 0 00-.515.006l-.423.433a.364.364 0 00.006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 00-.063-.51z"/>
+                  </svg>
+                </span>
+
+                <!-- Typing indicator -->
+                <span *ngIf="typingUsers[chat.id]" class="typing-text">{{ typingUsers[chat.id] }}</span>
+
+                <!-- Normal Message Text or Media icon -->
+                <span *ngIf="!typingUsers[chat.id]">
+                  <span *ngIf="chat.lastMessage?.type === 'IMAGE'">📷 Photo</span>
+                  <span *ngIf="chat.lastMessage?.type === 'VIDEO'">🎥 Video</span>
+                  <span *ngIf="chat.lastMessage?.type === 'VOICE'">🎤 Voice note</span>
+                  <span *ngIf="chat.lastMessage?.type === 'AUDIO'">🎵 Audio</span>
+                  <span *ngIf="chat.lastMessage?.type === 'DOCUMENT'">📁 {{ chat.lastMessage?.fileName || 'Document' }}</span>
+                  <span *ngIf="chat.lastMessage?.type === 'TEXT' || chat.lastMessage?.type === 'SYSTEM'">
+                    {{ chat.lastMessage?.text || 'No messages yet' }}
+                  </span>
+                  <span *ngIf="!chat.lastMessage">Start in-house chat</span>
+                </span>
+              </div>
+
+              <div class="chat-badges">
+                <span *ngIf="chat.isPinned" class="pin-icon" title="Pinned">📌</span>
+                <span *ngIf="chat.unreadCount > 0" class="unread-pill">{{ chat.unreadCount }}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Empty state when no chats exist yet -->
+        <div *ngIf="filteredChats.length === 0" class="empty-chats-promo animate-pop-in">
+          <div class="promo-icon">💬</div>
+          <h3>No chats found</h3>
+          <p *ngIf="chatSearchQuery">No chats matching "{{ chatSearchQuery }}"</p>
+          <p *ngIf="!chatSearchQuery">No conversations yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------------------------------------------------- -->
+    <!-- RIGHT CHAT PANE                                      -->
+    <!-- ---------------------------------------------------- -->
+    <div class="chat-pane" *ngIf="activeChat">
+      <!-- Active Chat Header -->
+      <div class="chat-header">
+        <div class="header-contact">
+          <img [src]="activeChat.avatar || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + activeChat.id" class="avatar-img" />
+          <div class="contact-details">
+            <span class="contact-name">
+              {{ activeChat.name }}
+              <span *ngIf="!activeChat.isGroup && activeChat.otherUser?.department" class="active-emp-dept">
+                • {{ activeChat.otherUser?.department }}
+              </span>
+            </span>
+            <span class="contact-status">
+              <span *ngIf="typingUsers[activeChat.id]" class="typing-highlight">typing...</span>
+              <span *ngIf="!typingUsers[activeChat.id] && !activeChat.isGroup">
+                {{ activeChat.otherUser?.isOnline ? '🟢 Online' : (activeChat.otherUser?.department ? activeChat.otherUser?.department + ' • ' : '') + formatLastSeen(activeChat.otherUser?.lastSeen) }}
+              </span>
+              <span *ngIf="!typingUsers[activeChat.id] && activeChat.isGroup">
+                {{ activeChat.members.length }} team members
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div class="header-chat-actions">
+          <!-- Voice Call Button (Permission checked) -->
+          <button class="icon-btn" 
+                  [disabled]="currentUser?.canMakeCalls === false"
+                  (click)="startCall('AUDIO')" 
+                  [title]="currentUser?.canMakeCalls === false ? 'Calling permission not granted' : 'Voice Call'">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-2.2 2.2a15.045 15.045 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 3.92c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-.99-1.04z"/>
+            </svg>
+          </button>
+
+          <!-- Video Call Button (Permission checked) -->
+          <button class="icon-btn" 
+                  [disabled]="currentUser?.canMakeCalls === false"
+                  (click)="startCall('VIDEO')" 
+                  [title]="currentUser?.canMakeCalls === false ? 'Video call permission not granted' : 'Video Call'">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Viewport (WhatsApp Doodle Background) -->
+      <div class="messages-viewport" #messagesContainer>
+        <div class="encryption-notice">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="#8696a0">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+          </svg>
+          <span>Messages and calls are end-to-end encrypted.</span>
+        </div>
+
+        <!-- Date separator if no messages exist yet -->
+        <div *ngIf="messages.length === 0" class="chat-date-separator">
+          <span class="chat-date-badge">{{ getMessageDateBadge() }}</span>
+        </div>
+
+        <!-- Messages Loop with Date Separators -->
+        <ng-container *ngFor="let msg of messages; let i = index">
+          
+          <!-- Date Separator Badge between different days -->
+          <div *ngIf="shouldShowDateBadge(msg, i)" class="chat-date-separator">
+            <span class="chat-date-badge">{{ getMessageDateBadge(msg.createdAt) }}</span>
+          </div>
+
+          <!-- Message Row -->
+          <div [class.outgoing]="msg.senderId === currentUser?.id"
+               [class.incoming]="msg.senderId !== currentUser?.id"
+               [class.selection-mode]="isSelectionMode && !msg.isDeleted && msg.type !== 'SYSTEM'"
+               [class.selected-msg]="isMessageSelected(msg.id)"
+               (click)="isSelectionMode ? toggleMessageSelection(msg) : null"
+               class="message-row">
+
+          <!-- Multi-Select Checkbox -->
+          <div *ngIf="isSelectionMode && !msg.isDeleted && msg.type !== 'SYSTEM'" class="msg-select-checkbox">
+            <span class="checkbox-circle" [class.checked]="isMessageSelected(msg.id)">
+              <span *ngIf="isMessageSelected(msg.id)">✓</span>
+            </span>
+          </div>
+
+          <!-- System Message Bubble -->
+          <div *ngIf="msg.type === 'SYSTEM'" class="system-bubble">
+            <span>{{ msg.text }}</span>
+          </div>
+
+          <!-- Normal Chat Bubble -->
+          <div *ngIf="msg.type !== 'SYSTEM'" class="message-bubble" [class.is-deleted]="msg.isDeleted">
+
+            <!-- Reply Header Preview if Replied to a message -->
+            <div *ngIf="msg.replyTo" class="replied-snippet">
+              <span class="replied-sender">{{ msg.replyTo.senderName || 'Employee' }}</span>
+              <span class="replied-text">{{ msg.replyTo.text || msg.replyTo.fileName || 'Attachment' }}</span>
+            </div>
+
+            <!-- Group Sender Name -->
+            <div *ngIf="activeChat?.isGroup && msg.senderId !== currentUser?.id" class="group-sender-name">
+              {{ msg.senderName }}
+            </div>
+
+            <!-- Deleted message text -->
+            <div *ngIf="msg.isDeleted" class="deleted-msg-text">
+              <i>🚫 This message was deleted</i>
+            </div>
+
+            <!-- Normal Content (When not deleted) -->
+            <div *ngIf="!msg.isDeleted" class="bubble-content">
+              
+              <!-- Photo Message -->
+              <div *ngIf="msg.type === 'IMAGE' && msg.fileUrl" class="media-container" (click)="openLightbox(msg.fileUrl, 'IMAGE', msg.text)">
+                <img [src]="api.getFullMediaUrl(msg.fileUrl)" class="chat-photo" />
+                <div *ngIf="msg.text" class="media-caption">{{ msg.text }}</div>
+              </div>
+
+              <!-- Video Message -->
+              <div *ngIf="msg.type === 'VIDEO' && msg.fileUrl" class="media-container">
+                <video [src]="api.getFullMediaUrl(msg.fileUrl)" controls class="chat-video"></video>
+                <div *ngIf="msg.text" class="media-caption">{{ msg.text }}</div>
+              </div>
+
+              <!-- Voice Note Message -->
+              <div *ngIf="msg.type === 'VOICE' && msg.fileUrl" class="voice-note-player">
+                <audio #voiceAudio [src]="api.getFullMediaUrl(msg.fileUrl)"></audio>
+                <div class="voice-note-left">
+                  <div class="voice-avatar-badge">
+                    <img [src]="msg.senderAvatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + msg.senderId" />
+                    <span class="mic-badge-icon">🎤</span>
+                  </div>
+                  <button (click)="voiceAudio.paused ? voiceAudio.play() : voiceAudio.pause()" class="play-btn">
+                    {{ voiceAudio.paused ? '▶' : '⏸' }}
+                  </button>
+                </div>
+
+                <div class="voice-waveform-area">
+                  <div class="waveform-bars">
+                    <span style="height: 30%"></span>
+                    <span style="height: 60%"></span>
+                    <span style="height: 80%"></span>
+                    <span style="height: 45%"></span>
+                    <span style="height: 70%"></span>
+                    <span style="height: 90%"></span>
+                    <span style="height: 40%"></span>
+                    <span style="height: 65%"></span>
+                    <span style="height: 50%"></span>
+                    <span style="height: 85%"></span>
+                  </div>
+                  <div class="voice-meta">
+                    <span>{{ msg.duration ? (msg.duration | number:'1.0-0') + 's' : '0:05' }}</span>
+                    <button class="speed-toggle" (click)="toggleAudioSpeed(msg.id, voiceAudio)">
+                      {{ audioPlayRates[msg.id] || 1 }}x
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Regular Audio Track -->
+              <div *ngIf="msg.type === 'AUDIO' && msg.fileUrl" class="audio-file-box">
+                <audio controls [src]="api.getFullMediaUrl(msg.fileUrl)" class="audio-control"></audio>
+              </div>
+
+              <!-- Document & Any File Transfer (ZIP, BIN, PDF, APK, etc.) -->
+              <div *ngIf="msg.type === 'DOCUMENT' && msg.fileUrl" class="document-file-box">
+                <div class="file-icon-badge">
+                  <span class="ext-label">{{ (msg.fileName || '').split('.').pop()?.toUpperCase() || 'FILE' }}</span>
+                </div>
+                <div class="file-details">
+                  <span class="file-name" [title]="msg.fileName">{{ msg.fileName }}</span>
+                  <span class="file-size">{{ formatFileSize(msg.fileSize) }} • {{ (msg.fileName || '').split('.').pop()?.toUpperCase() }}</span>
+                </div>
+                <a [href]="api.getFullMediaUrl(msg.fileUrl)" [download]="msg.fileName" class="download-file-btn" title="Download File">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+                  </svg>
+                </a>
+              </div>
+
+              <!-- Text Message -->
+              <div *ngIf="msg.type === 'TEXT'" class="text-content">
+                {{ msg.text }}
+              </div>
+            </div>
+
+            <!-- Bubble Footer (Timestamp, Star, Delivery Status) -->
+            <div class="bubble-meta">
+              <span *ngIf="msg.isStarred" class="star-icon">⭐</span>
+              <span class="time-label" [title]="formatFullDateTime(msg.createdAt)">{{ formatTime(msg.createdAt) }}</span>
+              
+              <!-- Sent Tick Marks -->
+              <span *ngIf="msg.senderId === currentUser?.id" class="ticks">
+                <svg *ngIf="msg.status === 'READ'" viewBox="0 0 16 15" width="16" height="15" fill="#53bdeb">
+                  <path d="M15.01 3.316l-.478-.372a.365.365 0 00-.51.063L8.666 9.879a.32.32 0 01-.484.033l-.358-.325a.319.319 0 00-.484.032l-.378.483a.418.418 0 00.036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 00-.064-.512zm-4.1 0l-.478-.372a.365.365 0 00-.51.063L4.566 9.879a.32.32 0 01-.484.033L1.891 7.769a.366.366 0 00-.515.006l-.423.433a.364.364 0 00.006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 00-.063-.51z"/>
+                </svg>
+                <svg *ngIf="msg.status !== 'READ'" viewBox="0 0 16 15" width="16" height="15" fill="#8696a0">
+                  <path d="M15.01 3.316l-.478-.372a.365.365 0 00-.51.063L8.666 9.879a.32.32 0 01-.484.033l-.358-.325a.319.319 0 00-.484.032l-.378.483a.418.418 0 00.036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 00-.064-.512zm-4.1 0l-.478-.372a.365.365 0 00-.51.063L4.566 9.879a.32.32 0 01-.484.033L1.891 7.769a.366.366 0 00-.515.006l-.423.433a.364.364 0 00.006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 00-.063-.51z"/>
+                </svg>
+              </span>
+            </div>
+
+            <!-- Reaction Badges Attached to Bubble -->
+            <div *ngIf="msg.reactions && msg.reactions.length > 0" class="bubble-reactions-badge">
+              <span *ngFor="let r of msg.reactions" class="single-reaction" [title]="r.userName">
+                {{ r.emoji }}
+              </span>
+            </div>
+
+            <!-- WhatsApp-Style Message Corner Dropdown Button & Context Menu -->
+            <div *ngIf="!msg.isDeleted && !isSelectionMode" class="bubble-dropdown-wrapper" (click)="$event.stopPropagation()">
+              <button class="bubble-dropdown-btn" 
+                      [class.active]="activeMessageDropdownId === msg.id"
+                      (click)="toggleMessageDropdown(msg.id)" 
+                      title="Message options">
+                <svg viewBox="0 0 19 20" width="15" height="15" fill="currentColor">
+                  <path fill="currentColor" d="M3.8 6.7l5.7 5.7 5.7-5.7 1.4 1.4-7.1 7.1-7.1-7.1z"/>
+                </svg>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div *ngIf="activeMessageDropdownId === msg.id" 
+                   class="bubble-dropdown-menu animate-pop-in">
+                
+                <!-- Quick Reactions Row -->
+                <div class="dropdown-reactions-row">
+                  <button *ngFor="let emoji of quickReactions" 
+                          (click)="reactToMessage(msg, emoji); activeMessageDropdownId = null" 
+                          class="reaction-quick-btn" 
+                          [title]="emoji">
+                    {{ emoji }}
+                  </button>
+                </div>
+                <div class="dropdown-divider"></div>
+
+                <!-- 1. Reply to this particular message -->
+                <div class="dropdown-item" (click)="replyToMessage(msg)">
+                  <span class="dropdown-item-icon">↩️</span>
+                  <span>Reply</span>
+                </div>
+
+                <!-- 2. Forward this message -->
+                <div class="dropdown-item" (click)="openForwardModal(msg)">
+                  <span class="dropdown-item-icon">↪️</span>
+                  <span>Forward</span>
+                </div>
+
+                <!-- 3. Select multiple messages -->
+                <div class="dropdown-item" (click)="startSelectionMode(msg)">
+                  <span class="dropdown-item-icon">☑️</span>
+                  <span>Select messages</span>
+                </div>
+
+                <!-- 4. Copy Message Text -->
+                <div *ngIf="msg.text" class="dropdown-item" (click)="copyMessageText(msg.text); activeMessageDropdownId = null">
+                  <span class="dropdown-item-icon">📋</span>
+                  <span>Copy text</span>
+                </div>
+
+                <!-- 5. Star / Unstar Message -->
+                <div class="dropdown-item" (click)="toggleStar(msg); activeMessageDropdownId = null">
+                  <span class="dropdown-item-icon">{{ msg.isStarred ? '⭐' : '☆' }}</span>
+                  <span>{{ msg.isStarred ? 'Unstar' : 'Star message' }}</span>
+                </div>
+
+                <!-- 4. Delete: Strictly gated by permission -->
+                <ng-container *ngIf="currentUser?.canDeleteMessages && (msg.senderId === currentUser?.id || currentUser?.role === 'Admin')">
+                  <div class="dropdown-divider"></div>
+                  <div class="dropdown-item text-danger" (click)="deleteMessage(msg)">
+                    <span class="dropdown-item-icon">🗑️</span>
+                    <span>Delete message</span>
+                  </div>
+                </ng-container>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </ng-container>
+      </div>
+
+      <!-- Reply Banner (When quoting a message) -->
+      <div *ngIf="replyingTo" class="reply-preview-banner animate-pop-in">
+        <div class="reply-content-box">
+          <span class="reply-sender-name">{{ replyingTo.senderName || 'Message' }}</span>
+          <span class="reply-body-text">{{ replyingTo.text || replyingTo.fileName || 'Attachment' }}</span>
+        </div>
+        <button class="cancel-reply-btn" (click)="cancelReply()">✕</button>
+      </div>
+
+      <!-- Chat Footer: Selection Action Bar (When selecting multiple messages) -->
+      <div *ngIf="isSelectionMode" class="selection-footer-bar animate-pop-in">
+        <div class="selection-left">
+          <button class="icon-btn" (click)="cancelSelectionMode()" title="Cancel selection">✕</button>
+          <span class="selection-count">{{ selectedMessageIds.length }} selected</span>
+        </div>
+        <div class="selection-actions">
+          <button *ngIf="canDeleteSelected()" 
+                  class="btn-selection-delete" 
+                  (click)="deleteSelectedMessages()" 
+                  title="Delete selected messages">
+            🗑️ Delete
+          </button>
+          <button class="btn-selection-forward" 
+                  [disabled]="selectedMessageIds.length === 0" 
+                  (click)="openForwardModal()" 
+                  title="Forward selected messages">
+            ↪️ Forward ({{ selectedMessageIds.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Footer Input Bar -->
+      <div *ngIf="!isSelectionMode" class="chat-footer">
+        
+        <!-- Normal Mode (When not recording audio) -->
+        <ng-container *ngIf="!recorder.isRecording">
+          <!-- Emoji Picker Trigger -->
+          <div class="emoji-wrapper">
+            <button class="icon-btn" (click)="$event.stopPropagation(); showEmojiPicker = !showEmojiPicker" title="Emojis">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+              </svg>
+            </button>
+
+            <!-- Emoji Popup -->
+            <div *ngIf="showEmojiPicker" class="emoji-popup animate-pop-in" (click)="$event.stopPropagation()">
+              <span *ngFor="let e of emojiList" (click)="messageText = messageText + e" class="emoji-tile">
+                {{ e }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Attachment Clip Trigger (Permission Controlled) -->
+          <div class="attach-wrapper">
+            <button class="icon-btn" 
+                    [class.disabled-btn]="currentUser?.canSendFiles === false"
+                    (click)="triggerFileUpload('ALL')" 
+                    [title]="currentUser?.canSendFiles === false ? 'Permission denied: Cannot send files' : 'Attach file'">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 003.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.056-2.812-.099-1.134-.608-2.133-1.437-2.813a4.133 4.133 0 00-2.822-.865c-1.11.082-2.115.587-2.83 1.303l-8.625 8.625a2.532 2.532 0 00-.742 1.794c0 .676.264 1.312.743 1.791a2.532 2.532 0 001.792.742c.676 0 1.312-.265 1.792-.743l7.001-6.999a.833.833 0 10-1.178-1.179l-7.001 7a.87.87 0 01-.613.255.87.87 0 01-.614-.255.867.867 0 01-.255-.613c0-.231.09-.449.255-.613l8.623-8.623a2.49 2.49 0 011.716-.795c.706-.051 1.397.165 1.944.608.536.435.866 1.077.93 1.808.058.67-.184 1.312-.679 1.807l-9.547 9.547a3.916 3.916 0 01-2.793 1.157c-1.054 0-2.045-.41-2.79-1.156a3.922 3.922 0 01-1.157-2.793c0-1.054.41-2.046 1.157-2.792l9.049-9.05a.833.833 0 10-1.179-1.178l-9.049 9.049a5.578 5.578 0 00-1.646 3.974z"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Input Textbox -->
+          <div class="chat-input-box">
+            <input type="text" 
+                   #chatInput
+                   [(ngModel)]="messageText" 
+                   (input)="onTyping()"
+                   (keydown.enter)="sendMessage()"
+                   placeholder="Type an in-house message" />
+          </div>
+
+          <!-- Right Action: Send Button (if text) or Mic Button (if empty) -->
+          <button *ngIf="messageText.trim()" (click)="sendMessage()" class="icon-btn send-btn" title="Send">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+
+          <button *ngIf="!messageText.trim()" 
+                  [class.disabled-btn]="currentUser?.canSendFiles === false"
+                  (click)="startVoiceRecording()" 
+                  class="icon-btn mic-btn" 
+                  [title]="currentUser?.canSendFiles === false ? 'Audio recording restricted' : 'Record Voice Note'">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+          </button>
+        </ng-container>
+
+        <!-- Voice Recording Mode -->
+        <ng-container *ngIf="recorder.isRecording">
+          <div class="recording-bar animate-pop-in">
+            <button (click)="cancelVoiceRecording()" class="cancel-rec-btn" title="Delete recording">
+              🗑️
+            </button>
+
+            <div class="recording-status">
+              <span class="rec-dot animate-pulse-mic"></span>
+              <span class="rec-timer">{{ recorder.recordingSeconds }}s</span>
+            </div>
+
+            <div class="rec-waveform">
+              <span *ngFor="let height of recorder.waveformBars" [style.height.%]="height" class="live-wave-bar"></span>
+            </div>
+
+            <button (click)="stopAndSendVoiceRecording()" class="send-rec-btn" title="Send Voice Note">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
+          </div>
+        </ng-container>
+
+      </div>
+    </div>
+
+    <!-- Right Pane: Welcome screen when no chat is open -->
+    <div class="chat-pane-empty" *ngIf="!activeChat">
+      <div class="empty-welcome">
+        <div class="welcome-art">
+          <svg viewBox="0 0 300 200" width="280" height="180">
+            <rect width="280" height="180" rx="12" fill="var(--bg-header)"/>
+            <circle cx="140" cy="80" r="40" fill="var(--primary-green)" opacity="0.3"/>
+            <path d="M140 50c-16.5 0-30 13.5-30 30 0 5.8 1.6 11.2 4.4 15.8L110 110l14.8-4.2c4.4 2.5 9.5 4.2 15.2 4.2 16.5 0 30-13.5 30-30s-13.5-30-30-30z" fill="var(--primary-green)"/>
+          </svg>
+        </div>
+        <h2>In-House Workplace WhatsApp</h2>
+        <p>Real-time collaboration for authorized company employees. All file formats (.zip, .bin, photos, video, audio) and WebRTC audio/video calling supported.</p>
+        <div class="lock-tag">
+          <span>🔒 SQL Server: <strong>Whatsapp</strong> • Local Enterprise Network</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 3. IN-HOUSE EMPLOYEE & PERMISSION MANAGEMENT MODAL       -->
+  <!-- ======================================================== -->
+  <div *ngIf="showEmpModal" class="modal-backdrop animate-pop-in" (click)="showEmpModal = false">
+    <div class="emp-management-modal" (click)="$event.stopPropagation()">
+      <div class="emp-modal-header">
+        <div class="modal-title-group">
+          <h3>🏢 In-House Employee & Permission Management</h3>
+          <span class="modal-subtitle">Configure employee directory and role-based permissions in SQL Server</span>
+        </div>
+        <button (click)="showEmpModal = false" class="close-btn">✕</button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="emp-modal-tabs">
+        <button [class.active]="empModalTab === 'directory'" (click)="empModalTab = 'directory'">
+          👥 Employee Directory & Permissions ({{ employees.length }})
+        </button>
+        <button [class.active]="empModalTab === 'add'" (click)="empModalTab = 'add'">
+          ➕ Add New Employee
+        </button>
+      </div>
+
+      <!-- Tab 1: Employee Directory & Permission Table -->
+      <div *ngIf="empModalTab === 'directory'" class="emp-tab-content">
+        <div class="emp-table-wrapper">
+          <table class="emp-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Dept / Role</th>
+                <th>Files (ZIP/BIN)</th>
+                <th>Calls (Voice/Video)</th>
+                <th>Groups</th>
+                <th>Status</th>
+                <th>Delete</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let emp of employees">
+                <td class="emp-info-cell">
+                  <img [src]="emp.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + emp.id" class="table-avatar" />
+                  <div>
+                    <strong class="table-emp-name">{{ emp.name }}</strong>
+                    <span class="table-emp-code">{{ emp.empCode }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="dept-badge">{{ emp.department }}</span>
+                  <small class="desig-text">{{ emp.designation }}</small>
+                </td>
+                <!-- Permission Toggles -->
+                <td class="text-center">
+                  <input type="checkbox" [checked]="emp.canSendFiles" (change)="togglePermission(emp, 'canSendFiles')" title="Allow/Deny File Transfers" />
+                </td>
+                <td class="text-center">
+                  <input type="checkbox" [checked]="emp.canMakeCalls" (change)="togglePermission(emp, 'canMakeCalls')" title="Allow/Deny Audio & Video Calls" />
+                </td>
+                <td class="text-center">
+                  <input type="checkbox" [checked]="emp.canCreateGroups" (change)="togglePermission(emp, 'canCreateGroups')" title="Allow/Deny Creating Groups" />
+                </td>
+                <td class="text-center">
+                  <input type="checkbox" [checked]="emp.canPostStatus" (change)="togglePermission(emp, 'canPostStatus')" title="Allow/Deny Posting Status" />
+                </td>
+                <td class="text-center">
+                  <input type="checkbox" [checked]="emp.canDeleteMessages" (change)="togglePermission(emp, 'canDeleteMessages')" title="Allow/Deny Deleting Messages" />
+                </td>
+                <td class="text-center">
+                  <span class="active-pill" [class.inactive]="!emp.isActive" (click)="togglePermission(emp, 'isActive')" [title]="emp.isActive ? 'Click to Deactivate Account' : 'Click to Activate Account'">
+                    {{ emp.isActive ? '🟢 Active' : '🔴 Deactivated' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Add New Employee Form -->
+      <div *ngIf="empModalTab === 'add'" class="emp-tab-content">
+        <div class="add-emp-form-grid">
+          <div class="form-field">
+            <label>Employee Code / ID *</label>
+            <input type="text" [(ngModel)]="newEmpForm.empCode" placeholder="e.g. EMP-101" />
+          </div>
+          <div class="form-field">
+            <label>Full Name *</label>
+            <input type="text" [(ngModel)]="newEmpForm.name" placeholder="Employee Name" />
+          </div>
+          <div class="form-field">
+            <label>Login Password *</label>
+            <input type="text" [(ngModel)]="newEmpForm.password" placeholder="Default: Password@123" />
+          </div>
+          <div class="form-field">
+            <label>Account Status (Active / Deactive) *</label>
+            <select [(ngModel)]="newEmpForm.isActive">
+              <option [ngValue]="true">🟢 Active (Can Login & Chat)</option>
+              <option [ngValue]="false">🔴 Deactivated (Login Blocked)</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Department</label>
+            <select [(ngModel)]="newEmpForm.department">
+              <option value="IT / Engineering">IT / Engineering</option>
+              <option value="UI/UX Design">UI/UX Design</option>
+              <option value="Product Management">Product Management</option>
+              <option value="Operations & HR">Operations & HR</option>
+              <option value="Quality Assurance">Quality Assurance</option>
+              <option value="Accounts & Finance">Accounts & Finance</option>
+              <option value="Sales & Marketing">Sales & Marketing</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Designation</label>
+            <input type="text" [(ngModel)]="newEmpForm.designation" placeholder="e.g. Software Engineer" />
+          </div>
+          <div class="form-field">
+            <label>Official Email</label>
+            <input type="email" [(ngModel)]="newEmpForm.email" placeholder="emp@company.local" />
+          </div>
+          <div class="form-field">
+            <label>Role</label>
+            <select [(ngModel)]="newEmpForm.role">
+              <option value="Employee">Employee</option>
+              <option value="Manager">Manager</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="permissions-checklist-section">
+          <h4>Set Permissions for this Employee:</h4>
+          <div class="perm-checkbox-grid">
+            <label class="perm-checkbox-item">
+              <input type="checkbox" [(ngModel)]="newEmpForm.canSendFiles" />
+              <span>📁 Can Send Files (Audio, Video, ZIP, BIN, Photos)</span>
+            </label>
+            <label class="perm-checkbox-item">
+              <input type="checkbox" [(ngModel)]="newEmpForm.canMakeCalls" />
+              <span>📞 Can Make Audio & Video Calls</span>
+            </label>
+            <label class="perm-checkbox-item">
+              <input type="checkbox" [(ngModel)]="newEmpForm.canCreateGroups" />
+              <span>👥 Can Create Group Chats</span>
+            </label>
+            <label class="perm-checkbox-item">
+              <input type="checkbox" [(ngModel)]="newEmpForm.canPostStatus" />
+              <span>📢 Can Post Status Stories</span>
+            </label>
+            <label class="perm-checkbox-item">
+              <input type="checkbox" [(ngModel)]="newEmpForm.canDeleteMessages" />
+              <span>🗑️ Can Delete Messages for Everyone</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer-row">
+          <button class="btn-cancel" (click)="empModalTab = 'directory'">Cancel</button>
+          <button class="btn-primary-whatsapp" (click)="addNewEmployee()">Save & Register Employee</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 4. WEBRTC AUDIO & VIDEO CALL MODAL                      -->
+  <!-- ======================================================== -->
+  <div *ngIf="activeCall" class="call-overlay animate-pop-in">
+    <div class="call-card" [class.video-call]="activeCall.callType === 'VIDEO'">
+      
+      <!-- Video Streams (When Video Call) -->
+      <div *ngIf="activeCall.callType === 'VIDEO'" class="video-container">
+        <video #remoteVideo autoplay playsinline class="remote-video-feed"></video>
+        <video #localVideo autoplay playsinline muted class="local-video-pip"></video>
+      </div>
+
+      <!-- Caller Info Top -->
+      <div class="call-top-info">
+        <img [src]="(activeCall.isIncoming ? activeCall.callerAvatar : activeCall.targetUserAvatar) || 'https://api.dicebear.com/7.x/bottts/svg?seed=caller'" class="call-avatar animate-ring" />
+        <h3 class="call-person-name">{{ activeCall.isIncoming ? activeCall.callerName : activeCall.targetUserName }}</h3>
+        <p class="call-status-label">
+          <span *ngIf="activeCall.status === 'ringing'">{{ activeCall.isIncoming ? 'Incoming ' + activeCall.callType + ' Call...' : 'Calling...' }}</span>
+          <span *ngIf="activeCall.status === 'connected'">Connected ({{ formatDuration(callDurationSeconds) }})</span>
+        </p>
+      </div>
+
+      <!-- Call Action Controls -->
+      <div class="call-controls">
+        <ng-container *ngIf="activeCall.isIncoming && activeCall.status === 'ringing'">
+          <button (click)="acceptIncomingCall()" class="call-btn btn-accept" title="Accept Call">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff">
+              <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-2.2 2.2a15.045 15.045 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 3.92c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-.99-1.04z"/>
+            </svg>
+          </button>
+          <button (click)="rejectIncomingCall()" class="call-btn btn-reject" title="Decline Call">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff">
+              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.996.996 0 010-1.41C2.5 9.46 6.96 8 12 8s9.5 1.46 11.71 3.67c.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29s-.52-.11-.7-.28c-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+            </svg>
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="!activeCall.isIncoming || activeCall.status === 'connected'">
+          <button (click)="webrtc.toggleMute()" [class.active-toggled]="webrtc.isMuted" class="call-btn btn-secondary" title="Mute Mic">
+            {{ webrtc.isMuted ? '🔇' : '🎙️' }}
+          </button>
+
+          <button *ngIf="activeCall.callType === 'VIDEO'" (click)="webrtc.toggleCamera()" [class.active-toggled]="webrtc.isCameraOff" class="call-btn btn-secondary" title="Toggle Camera">
+            {{ webrtc.isCameraOff ? '🚫' : '📹' }}
+          </button>
+
+          <button (click)="endCall()" class="call-btn btn-reject" title="End Call">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff">
+              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.996.996 0 010-1.41C2.5 9.46 6.96 8 12 8s9.5 1.46 11.71 3.67c.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29s-.52-.11-.7-.28c-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+            </svg>
+          </button>
+        </ng-container>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 5. STATUS STORIES VIEWER MODAL                          -->
+  <!-- ======================================================== -->
+  <div *ngIf="showStatusViewer && activeStatusGroup" class="status-viewer-modal animate-pop-in">
+    <div class="story-progress-container">
+      <div *ngFor="let s of activeStatusGroup.stories; let i = index" class="story-progress-bar">
+        <div class="story-progress-fill" [style.width.%]="i < currentStoryIndex ? 100 : (i === currentStoryIndex ? storyProgress : 0)"></div>
+      </div>
+    </div>
+
+    <div class="story-header">
+      <div class="story-user-meta">
+        <img [src]="activeStatusGroup.user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + activeStatusGroup.user.id" class="story-avatar" />
+        <span class="story-user-name">{{ activeStatusGroup.user.name }}</span>
+      </div>
+      <button (click)="closeStatusViewer()" class="close-story-btn">✕</button>
+    </div>
+
+    <div class="story-body" 
+         [style.background-color]="activeStatusGroup.stories[currentStoryIndex].backgroundColor || '#075e54'"
+         (click)="nextStory()">
+      
+      <div *ngIf="activeStatusGroup.stories[currentStoryIndex].type === 'TEXT'" class="text-story-content">
+        <p>{{ activeStatusGroup.stories[currentStoryIndex].content }}</p>
+      </div>
+
+      <div *ngIf="activeStatusGroup.stories[currentStoryIndex].type === 'IMAGE'" class="media-story-content">
+        <img [src]="api.getFullMediaUrl(activeStatusGroup.stories[currentStoryIndex].content)" class="story-img" />
+        <div *ngIf="activeStatusGroup.stories[currentStoryIndex].caption" class="story-caption">
+          {{ activeStatusGroup.stories[currentStoryIndex].caption }}
+        </div>
+      </div>
+    </div>
+
+    <button (click)="prevStory()" class="story-nav-btn prev-btn">‹</button>
+    <button (click)="nextStory()" class="story-nav-btn next-btn">›</button>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 6. CREATE STATUS MODAL (Permission Protected)           -->
+  <!-- ======================================================== -->
+  <div *ngIf="showCreateStatusModal" class="modal-backdrop animate-pop-in">
+    <div class="create-status-card">
+      <div class="modal-header">
+        <h3>Create Status Update</h3>
+        <button (click)="showCreateStatusModal = false" class="close-btn">✕</button>
+      </div>
+
+      <div class="status-preview-box" [style.background-color]="newStatusColor">
+        <textarea [(ngModel)]="newStatusText" placeholder="Type a company announcement or status..."></textarea>
+      </div>
+
+      <div class="status-color-palette">
+        <span *ngFor="let col of availableColors" 
+              (click)="newStatusColor = col" 
+              [style.background-color]="col" 
+              [class.active]="newStatusColor === col"
+              class="color-dot"></span>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="showCreateStatusModal = false" class="btn-cancel">Cancel</button>
+        <button (click)="postTextStatus()" class="btn-primary-whatsapp">Post Status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 7. NEW IN-HOUSE CHAT MODAL                               -->
+  <!-- ======================================================== -->
+  <div *ngIf="showNewChatModal" class="modal-backdrop animate-pop-in">
+    <div class="contacts-modal-card">
+      <div class="modal-header">
+        <h3>New In-House Workplace Chat</h3>
+        <button (click)="showNewChatModal = false" class="close-btn">✕</button>
+      </div>
+      <p class="contacts-subtitle">Select an authorized employee to start messaging ({{ filteredEmployees.length }} available):</p>
+      
+      <div class="modal-search-box">
+        <input type="text" [(ngModel)]="chatSearchQuery" placeholder="Search by name, department, employee ID..." />
+      </div>
+
+      <div class="contacts-list">
+        <div *ngFor="let u of filteredEmployees" (click)="openEmployeeChat(u)" class="contact-user-row">
+          <div class="avatar-wrapper">
+            <img [src]="u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.id" class="avatar-img" />
+            <span *ngIf="u.isOnline" class="online-dot" title="Online now"></span>
+          </div>
+          <div class="contact-row-info">
+            <div class="contact-row-top">
+              <span class="user-name">{{ u.name }}</span>
+              <span class="emp-code-sub">[{{ u.empCode }}]</span>
+            </div>
+            <span class="user-about">{{ u.department }} • {{ u.designation }}</span>
+            <small class="user-quote" *ngIf="u.about">"{{ u.about }}"</small>
+          </div>
+          <button class="btn-chat-action-modal" (click)="$event.stopPropagation(); openEmployeeChat(u)">
+            💬 Message
+          </button>
+        </div>
+
+        <div *ngIf="filteredEmployees.length === 0" class="no-emp-box">
+          <p>No employees found matching search</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 8. CREATE GROUP CHAT MODAL (Permission Protected)        -->
+  <!-- ======================================================== -->
+  <div *ngIf="showCreateGroupModal" class="modal-backdrop animate-pop-in">
+    <div class="contacts-modal-card">
+      <div class="modal-header">
+        <h3>Create New Team Group</h3>
+        <button (click)="showCreateGroupModal = false" class="close-btn">✕</button>
+      </div>
+
+      <div class="group-form-inputs">
+        <input type="text" [(ngModel)]="newGroupName" placeholder="Group Subject / Title" class="group-name-input" />
+        <input type="text" [(ngModel)]="newGroupDescription" placeholder="Team/Project Description" class="group-desc-input" />
+      </div>
+
+      <p class="select-label">Select Team Members ({{ selectedGroupMemberIds.length }} selected):</p>
+      
+      <div class="contacts-list">
+        <div *ngFor="let u of allUsers" (click)="toggleGroupMemberSelection(u.id)" class="contact-user-row" [class.selected]="selectedGroupMemberIds.includes(u.id)">
+          <input type="checkbox" [checked]="selectedGroupMemberIds.includes(u.id)" />
+          <img [src]="u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.id" class="avatar-img" />
+          <div class="contact-row-info">
+            <span class="user-name">{{ u.name }} <small class="emp-code-sub">({{ u.empCode }})</small></span>
+            <span class="user-about">{{ u.department }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="showCreateGroupModal = false" class="btn-cancel">Cancel</button>
+        <button (click)="createGroup()" class="btn-primary-whatsapp" [disabled]="!newGroupName.trim() || selectedGroupMemberIds.length === 0">
+          Create Group
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 9. PROFILE & PERMISSIONS DRAWER                          -->
+  <!-- ======================================================== -->
+  <div *ngIf="showProfileDrawer" class="drawer-overlay animate-pop-in">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <button (click)="showProfileDrawer = false" class="back-btn">←</button>
+        <h3>Employee Profile</h3>
+      </div>
+      <div class="drawer-body">
+        <div class="profile-pic-section">
+          <img [src]="currentUser?.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=avatar'" class="large-avatar" />
+        </div>
+
+        <div class="profile-field">
+          <label>Employee Code</label>
+          <p class="phone-display"><strong>{{ currentUser?.empCode }}</strong> ({{ currentUser?.role }})</p>
+        </div>
+
+        <div class="profile-field">
+          <label>Department & Designation</label>
+          <p class="phone-display">{{ currentUser?.department }} • {{ currentUser?.designation }}</p>
+        </div>
+
+        <div class="profile-field">
+          <label>Display Name</label>
+          <input type="text" [(ngModel)]="editProfileName" class="profile-input" />
+        </div>
+
+        <div class="profile-field">
+          <label>About / Status</label>
+          <input type="text" [(ngModel)]="editProfileAbout" class="profile-input" />
+        </div>
+
+        <!-- Permissions Status List -->
+        <div class="profile-permissions-box">
+          <label>Your Assigned Permissions</label>
+          <ul class="perm-status-list">
+            <li><span>📁 File Transfers:</span> <strong>{{ currentUser?.canSendFiles ? 'Allowed' : 'Blocked' }}</strong></li>
+            <li><span>📞 Voice/Video Calls:</span> <strong>{{ currentUser?.canMakeCalls ? 'Allowed' : 'Blocked' }}</strong></li>
+            <li><span>👥 Group Creation:</span> <strong>{{ currentUser?.canCreateGroups ? 'Allowed' : 'Blocked' }}</strong></li>
+            <li><span>📢 Post Status:</span> <strong>{{ currentUser?.canPostStatus ? 'Allowed' : 'Blocked' }}</strong></li>
+            <li><span>🗑️ Delete Messages:</span> <strong>{{ currentUser?.canDeleteMessages ? 'Allowed' : 'Blocked' }}</strong></li>
+          </ul>
+        </div>
+
+        <button (click)="saveProfileChanges()" class="btn-primary-whatsapp mt-4">
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 10. MEDIA LIGHTBOX MODAL                                 -->
+  <!-- ======================================================== -->
+  <div *ngIf="lightboxMedia" class="lightbox-overlay animate-pop-in" (click)="closeLightbox()">
+    <div class="lightbox-content" (click)="$event.stopPropagation()">
+      <button class="lightbox-close-btn" (click)="closeLightbox()">✕</button>
+      <img *ngIf="lightboxMedia.type === 'IMAGE'" [src]="lightboxMedia.url" class="lightbox-img" />
+      <video *ngIf="lightboxMedia.type === 'VIDEO'" [src]="lightboxMedia.url" controls autoplay class="lightbox-video"></video>
+      <div *ngIf="lightboxMedia.caption" class="lightbox-caption">{{ lightboxMedia.caption }}</div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 11. FORWARD MESSAGES MODAL                               -->
+  <!-- ======================================================== -->
+  <div *ngIf="showForwardModal" class="modal-backdrop animate-pop-in" (click)="closeForwardModal()">
+    <div class="forward-modal" (click)="$event.stopPropagation()">
+      <div class="forward-modal-header">
+        <div class="forward-title-group">
+          <button class="icon-btn" (click)="closeForwardModal()">✕</button>
+          <h3>Forward {{ selectedMessageIds.length }} message{{ selectedMessageIds.length > 1 ? 's' : '' }} to</h3>
+        </div>
+      </div>
+
+      <div class="forward-search-bar">
+        <input type="text" 
+               [(ngModel)]="forwardSearchQuery" 
+               placeholder="Search employee or group..." />
+      </div>
+
+      <div class="forward-chats-list">
+        <div *ngFor="let chat of filteredForwardChats" 
+             class="forward-chat-item"
+             [class.selected]="selectedForwardChatIds.includes(chat.id)"
+             (click)="toggleForwardTarget(chat.id)">
+          <span class="checkbox-circle" [class.checked]="selectedForwardChatIds.includes(chat.id)">
+            <span *ngIf="selectedForwardChatIds.includes(chat.id)">✓</span>
+          </span>
+          <img [src]="chat.avatar || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + chat.id" class="avatar-img" />
+          <div class="forward-chat-info">
+            <span class="forward-chat-name">{{ chat.name }}</span>
+            <small class="forward-chat-sub">
+              {{ chat.isGroup ? (chat.members.length + ' members') : (chat.otherUser?.department || 'In-house Employee') }}
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="selectedForwardChatIds.length > 0" class="forward-modal-footer animate-pop-in">
+        <span class="forward-selected-count">
+          {{ selectedForwardChatIds.length }} chat{{ selectedForwardChatIds.length > 1 ? 's' : '' }} selected
+        </span>
+        <button class="btn-forward-send" [disabled]="isForwarding" (click)="confirmForwardMessages()">
+          {{ isForwarding ? 'Forwarding...' : 'Send ↪️' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
