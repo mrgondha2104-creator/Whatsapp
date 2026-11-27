@@ -3,21 +3,22 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { User, Chat, Message, UserStatusGroup, CallLog, EmployeeForm } from '../models/whatsapp.models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  public readonly baseUrl = typeof window !== 'undefined' && window.location?.hostname
-    ? `http://${window.location.hostname}:5000`
-    : 'http://localhost:5000';
+  public get baseUrl(): string {
+    return environment.apiBaseUrl;
+  }
   private tokenKey = 'whatsapp_auth_token';
   private currentUserKey = 'whatsapp_current_user';
 
   private currentUserSubject = new BehaviorSubject<User | null>(this.getStoredUser());
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   public get currentUser(): User | null {
     return this.currentUserSubject.value;
@@ -90,7 +91,7 @@ export class ApiService {
     return this.http.post<any>(`${this.baseUrl}/api/auth/avatar`, formData, { headers: this.getHeaders() });
   }
 
-  // Employee Directory & Permissions
+  // Employee Directory & Permissions 
   getEmployees(): Observable<{ success: boolean; employees: User[] }> {
     return this.http.get<{ success: boolean; employees: User[] }>(`${this.baseUrl}/api/employees`, { headers: this.getHeaders() });
   }

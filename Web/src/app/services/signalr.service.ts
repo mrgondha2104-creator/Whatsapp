@@ -3,6 +3,7 @@ import * as signalR from '@microsoft/signalr';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { Message } from '../models/whatsapp.models';
 import { SoundService } from './sound.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -34,8 +35,7 @@ export class SignalrService {
       return;
     }
 
-    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : 'localhost';
-    const hubUrl = `http://${host}:5000/hubs/chat`;
+    const hubUrl = environment.signalrHubUrl;
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {

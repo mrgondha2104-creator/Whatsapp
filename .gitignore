@@ -1,0 +1,12 @@
+# Visual Studio & .NET build outputs
+.vs/
+**/bin/
+**/obj/
+*.suo
+*.user
+*.vsidx
+
+# Angular / Node
+**/node_modules/
+**/dist/
+**/.angular/
