@@ -141,3 +141,4 @@ D:\Yash\Whatsapp\Api\obj\Debug\net8.0\Api.pdb
 D:\Yash\Whatsapp\Api\obj\Debug\net8.0\Api.genruntimeconfig.cache
 D:\Yash\Whatsapp\Api\obj\Debug\net8.0\ref\Api.dll
 D:\Yash\Whatsapp\Api\bin\Debug\net8.0\Api.staticwebassets.runtime.json
+D:\Yash\Whatsapp\Api\obj\Debug\net8.0\Api.sourcelink.json
